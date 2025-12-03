@@ -1,4 +1,8 @@
-use std::{error, fs};
+use std::fs;
+
+use error::DayOneError;
+
+mod error;
 
 const DIAL_START: i128 = 50;
 const DIAL_MAX: i128 = 99;
@@ -17,13 +21,13 @@ struct Combo {
     amount: i128,
 }
 
-fn main() -> Result<(), Box<dyn error::Error>> {
+fn main() -> Result<(), DayOneError> {
     let _ = part_one()?;
     let _ = part_two()?;
     Ok(())
 }
 
-fn part_two() -> Result<(), Box<dyn error::Error>> {
+fn part_two() -> Result<(), DayOneError> {
     let mut counter = 0;
     let dial = Vec::from_iter(0..100);
 
@@ -39,11 +43,13 @@ fn part_two() -> Result<(), Box<dyn error::Error>> {
                 _ => panic!("invalid direction {:?}", characters[0]),
             };
 
-            let amount = str::from_utf8(&characters[1..]).unwrap();
-            let amount = amount.parse().unwrap();
+            let amount = str::from_utf8(&characters[1..])?;
+            let amount = amount.parse()?;
 
-            Combo { direction, amount }
+            Ok(Combo { direction, amount })
         })
+        .collect::<Result<Vec<Combo>, DayOneError>>()?
+        .iter()
         .fold(DIAL_START_INDEX, |dial_index, combo| {
             let new_index = match combo.direction {
                 Direction::L => {
@@ -89,9 +95,9 @@ fn part_two() -> Result<(), Box<dyn error::Error>> {
     Ok(())
 }
 
-fn part_one() -> Result<(), Box<dyn error::Error>> {
+fn part_one() -> Result<(), DayOneError> {
     let mut counter = 0;
-    let input = fs::read_to_string("input2.txt")?;
+    let input = fs::read_to_string("input.txt")?;
     let _ = input
         .lines()
         .map(|line| {
@@ -103,11 +109,13 @@ fn part_one() -> Result<(), Box<dyn error::Error>> {
                 _ => panic!("invalid direction {:?}", characters[0]),
             };
 
-            let amount = str::from_utf8(&characters[1..]).unwrap();
-            let amount = amount.parse().unwrap();
+            let amount = str::from_utf8(&characters[1..])?;
+            let amount = amount.parse()?;
 
-            Combo { direction, amount }
+            Ok(Combo { direction, amount })
         })
+        .collect::<Result<Vec<Combo>, DayOneError>>()?
+        .iter()
         .fold(DIAL_START, |dial, combo| {
             let new_dial = match combo.direction {
                 Direction::L => (dial - combo.amount).rem_euclid(DIAL_MAX + 1),
@@ -124,3 +132,5 @@ fn part_one() -> Result<(), Box<dyn error::Error>> {
     println!("PART ONE: dial has hit zero {counter:?} times");
     Ok(())
 }
+
+

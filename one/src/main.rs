@@ -132,5 +132,3 @@ fn part_one() -> Result<(), DayOneError> {
     println!("PART ONE: dial has hit zero {counter:?} times");
     Ok(())
 }
-
-

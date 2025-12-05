@@ -1,8 +1,9 @@
+use error::DayOneError;
 use std::fs;
 
-use error::DayOneError;
-
 mod error;
+
+const INPUT_FILE: &str = "input2.txt";
 
 const DIAL_START: i128 = 50;
 const DIAL_MAX: i128 = 99;
@@ -21,30 +22,55 @@ struct Combo {
     amount: i128,
 }
 
-fn main() -> Result<(), DayOneError> {
-    let _ = part_one()?;
-    let _ = part_two()?;
-    Ok(())
+fn main() {
+    let input = fs::read_to_string(INPUT_FILE).expect(&format!("file {INPUT_FILE} not found!"));
+
+    let _ = match part_one(&input) {
+        Ok(counter) => {
+            println!("part one completed with {counter}");
+        }
+        Err(error) => {
+            eprintln!("part one failed with {error}");
+        }
+    };
+
+    let _ = match part_two(&input) {
+        Ok(counter) => {
+            println!("part two completed with {counter}");
+        }
+        Err(error) => {
+            eprintln!("part two failed with {error}");
+        }
+    };
 }
 
-fn part_two() -> Result<(), DayOneError> {
+fn part_two(input: &str) -> Result<i32, DayOneError> {
     let mut counter = 0;
     let dial = Vec::from_iter(0..100);
 
-    let input = fs::read_to_string("input2.txt")?;
     let _ = input
         .lines()
         .map(|line| {
             let characters = line.as_bytes();
 
-            let direction = match characters[0] {
+            let direction = match characters
+                .get(0)
+                .ok_or_else(|| DayOneError::LineNotLongEnough(line.into()))?
+            {
                 b'R' => Direction::R,
                 b'L' => Direction::L,
                 _ => panic!("invalid direction {:?}", characters[0]),
             };
 
-            let amount = str::from_utf8(&characters[1..])?;
-            let amount = amount.parse()?;
+            if characters.len() < 2 {
+                return Err(DayOneError::LineNotLongEnough(line.into()));
+            }
+
+            let amount = str::from_utf8(&characters[1..])
+                .map_err(|e| DayOneError::Utf8Error(e, line.into()))?;
+            let amount = amount
+                .parse()
+                .map_err(|e| DayOneError::ParseIntError(e, line.into()))?;
 
             Ok(Combo { direction, amount })
         })
@@ -91,26 +117,35 @@ fn part_two() -> Result<(), DayOneError> {
             new_index
         });
 
-    println!("PART TWO dial has hit zero {counter:?} times");
-    Ok(())
+    Ok(counter)
 }
 
-fn part_one() -> Result<(), DayOneError> {
+fn part_one(input: &str) -> Result<i32, DayOneError> {
     let mut counter = 0;
-    let input = fs::read_to_string("input.txt")?;
     let _ = input
         .lines()
         .map(|line| {
             let characters = line.as_bytes();
 
-            let direction = match characters[0] {
+            let direction = match characters
+                .get(0)
+                .ok_or_else(|| DayOneError::LineNotLongEnough(line.into()))?
+            {
                 b'R' => Direction::R,
                 b'L' => Direction::L,
                 _ => panic!("invalid direction {:?}", characters[0]),
             };
 
-            let amount = str::from_utf8(&characters[1..])?;
-            let amount = amount.parse()?;
+            if characters.len() < 2 {
+                return Err(DayOneError::LineNotLongEnough(line.into()));
+            }
+
+            let amount = str::from_utf8(&characters[1..])
+                .map_err(|e| DayOneError::Utf8Error(e, line.into()))?;
+
+            let amount = amount
+                .parse()
+                .map_err(|e| DayOneError::ParseIntError(e, line.into()))?;
 
             Ok(Combo { direction, amount })
         })
@@ -129,6 +164,5 @@ fn part_one() -> Result<(), DayOneError> {
             new_dial
         });
 
-    println!("PART ONE: dial has hit zero {counter:?} times");
-    Ok(())
+    Ok(counter)
 }
